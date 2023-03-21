@@ -1,12 +1,9 @@
 use crate::{board::Board, color::Color, error::Error, hand::Hand, square::Square};
 
-//TODO: 引き分け
-
 #[derive(Clone, Copy, Debug)]
 pub enum Action {
-   Move { from: Square, to: Square }, //TODO: Move 構造体
-   PlaceFromHand { index: usize, to: Square }, //TODO: インデックスアクセスは安全でない.
-                                      //TODO: 降参
+   Move { from: Square, to: Square },
+   PlaceFromHand { index: usize, to: Square },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -14,7 +11,6 @@ pub enum Status {
    OnGoing,
    BlackWins,
    WhiteWins,
-   //TODO: 引き分け
 }
 
 #[derive(Clone, Debug)]
@@ -43,6 +39,14 @@ impl Game {
       &self.hands[color as usize]
    }
 
+   pub fn turn(&self) -> &Color {
+      &self.turn
+   }
+
+   pub fn status(&self) -> &Status {
+      &self.status
+   }
+
    pub fn execute(&mut self, action: Action) -> Result<Status, Error> {
       match self.status {
          Status::OnGoing => {}
@@ -54,14 +58,14 @@ impl Game {
          }
       };
 
-      let mut result = Ok(Status::OnGoing);
+      let result;
       match action {
          Action::Move { from, to } => match self.board.r#move(from, to) {
             Ok(board) => {
                self.board = board;
             }
             Err(err) => {
-               result = Err(err);
+               return Err(err);
             }
          },
          Action::PlaceFromHand { index, to } => {
@@ -71,23 +75,25 @@ impl Game {
                      self.board = board;
                   }
                   Err(err) => {
-                     result = Err(err);
+                     return Err(err);
                   }
                };
             } else {
-               //TODO: Err
+               return Err(Error::EmptyHand);
             }
          }
       };
+
       if self.board.has_won(Color::Black) {
-         self.status = Status::BlackWins; //TODO: どっちかにしたら?
-         result = Ok(Status::BlackWins);
+         self.status = Status::BlackWins;
       }
       if self.board.has_won(Color::White) {
          self.status = Status::WhiteWins;
-         result = Ok(Status::WhiteWins);
       }
+
       self.change_turn();
+
+      result = Ok(self.status);
       result
    }
 

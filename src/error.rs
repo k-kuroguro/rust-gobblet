@@ -9,6 +9,7 @@ use crate::square::Square;
 pub enum Error {
    InvalidPlacing(Square),
    InvalidMoving { from: Square, to: Square },
+   EmptyHand,
 }
 
 impl Display for Error {
@@ -18,6 +19,7 @@ impl Display for Error {
       match self {
          InvalidPlacing(square) => write!(f, "Couldn't place on {}.", square),
          InvalidMoving { from, to } => write!(f, "Couldn't move from {} to {}.", from, to),
+         EmptyHand => write!(f, "Couldn't extract a piece from empty hand."),
       }
    }
 }

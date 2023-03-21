@@ -1,14 +1,14 @@
 use crate::piece::Piece;
 
 const PIECE_SET_NUM: usize = 3;
-const INITIAL_GROUP: [Piece; 4] = [Piece::Tiny, Piece::Small, Piece::Medium, Piece::Big];
+const INITIAL_SET: [Piece; 4] = [Piece::Tiny, Piece::Small, Piece::Medium, Piece::Big];
 
 #[derive(Clone, Debug)]
 struct PieceSet(Vec<Piece>);
 
 impl PieceSet {
    pub fn new() -> Self {
-      Self(INITIAL_GROUP.to_vec())
+      Self(INITIAL_SET.to_vec())
    }
 
    pub fn peek(&self) -> Option<&Piece> {
@@ -33,10 +33,10 @@ impl Hand {
    }
 
    pub fn peek(&self, i: usize) -> Option<&Piece> {
-      self.pieces[i].peek()
+      self.pieces[i.clamp(0, PIECE_SET_NUM - 1)].peek()
    }
 
    pub fn pop(&mut self, i: usize) -> Option<Piece> {
-      self.pieces[i].pop()
+      self.pieces[i.clamp(0, PIECE_SET_NUM - 1)].pop()
    }
 }

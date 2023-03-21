@@ -73,18 +73,18 @@ impl Board {
       Ok(board)
    }
 
-   pub fn can_place(&self, color: Color, piece: Piece, square: Square) -> bool {
-      if self.combined & square == EMPTY {
+   pub fn can_place(&self, color: Color, piece: Piece, to: Square) -> bool {
+      if self.combined & to == EMPTY {
          return true;
       }
 
       if let Piece::Tiny = piece {
          return false;
       }
-      if self.color_combined[color.reverse() as usize] & square != EMPTY {
-         if self.has_3_in_a_row(color.reverse(), square) {
+      if self.color_combined[color.reverse() as usize] & to != EMPTY {
+         if self.has_3_in_a_row(color.reverse(), to) {
             for x in (piece as usize..=Piece::Big as usize).rev() {
-               if self.bitboards[x + 4 * color.reverse() as usize] & square != EMPTY {
+               if self.bitboards[x + 4 * color.reverse() as usize] & to != EMPTY {
                   return false;
                }
             }
@@ -93,7 +93,7 @@ impl Board {
          return false;
       } else {
          for x in (piece as usize..=Piece::Big as usize).rev() {
-            if self.bitboards[x + 4 * color as usize] & square != EMPTY {
+            if self.bitboards[x + 4 * color as usize] & to != EMPTY {
                return false;
             }
          }
@@ -196,9 +196,7 @@ impl Board {
 
 #[cfg(test)]
 mod tests {
-   use crate::{
-      bitboard::BitBoard, board::Board, color::Color, error::Error, piece::Piece, square::Square,
-   };
+   use crate::{bitboard::BitBoard, board::Board, color::Color, piece::Piece, square::Square};
 
    #[test]
    fn test_place() {
