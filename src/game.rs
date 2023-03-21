@@ -1,12 +1,12 @@
 use crate::{board::Board, color::Color, error::Error, hand::Hand, square::Square};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub enum Action {
    Move { from: Square, to: Square },
    PlaceFromHand { index: usize, to: Square },
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub enum Status {
    OnGoing,
    BlackWins,
@@ -16,7 +16,7 @@ pub enum Status {
 #[derive(Clone, Debug)]
 pub struct Game {
    board: Board,
-   hands: [Hand; 2], // [Black, White]
+   hands: [Hand; 2],
    turn: Color,
    status: Status,
 }
@@ -25,7 +25,7 @@ impl Game {
    pub fn new() -> Self {
       Self {
          board: Board::new(),
-         hands: [Hand::new(), Hand::new()],
+         hands: [Hand::new(Color::Black), Hand::new(Color::White)],
          turn: Color::Black,
          status: Status::OnGoing,
       }
@@ -70,7 +70,7 @@ impl Game {
          },
          Action::PlaceFromHand { index, to } => {
             if let Some(piece) = self.hands[self.turn as usize].pop(index) {
-               match self.board.place(self.turn, piece, to) {
+               match self.board.place(piece, to) {
                   Ok(board) => {
                      self.board = board;
                   }

@@ -1,6 +1,6 @@
 pub const COLOR_NUM: usize = 2;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub enum Color {
    Black = 0,
    White = 1,

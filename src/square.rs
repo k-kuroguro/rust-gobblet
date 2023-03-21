@@ -10,7 +10,7 @@
 
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub enum Square {
    A1 = 1 << 15,
    B1 = 1 << 14,

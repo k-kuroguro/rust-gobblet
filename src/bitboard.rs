@@ -2,7 +2,7 @@ use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, N
 
 use crate::square::Square;
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub struct BitBoard(u16);
 
 pub const EMPTY: BitBoard = BitBoard(0);
