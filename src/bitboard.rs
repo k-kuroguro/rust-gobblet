@@ -1,4 +1,5 @@
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
+#[macro_use]
+mod macros;
 
 use crate::square::Square;
 
@@ -36,320 +37,114 @@ impl BitBoard {
    }
 }
 
-impl BitAnd for BitBoard {
-   type Output = BitBoard;
+bit_and!(BitBoard, BitBoard);
+bit_and!(BitBoard, &BitBoard);
+bit_and!(&BitBoard, BitBoard);
+bit_and!(&BitBoard, &BitBoard);
+bit_and!(BitBoard, Square);
+bit_and!(BitBoard, &Square);
+bit_and!(&BitBoard, Square);
+bit_and!(&BitBoard, &Square);
 
-   #[inline]
-   fn bitand(self, other: BitBoard) -> BitBoard {
-      BitBoard(self.0 & other.0)
+bit_or!(BitBoard, BitBoard);
+bit_or!(BitBoard, &BitBoard);
+bit_or!(&BitBoard, BitBoard);
+bit_or!(&BitBoard, &BitBoard);
+bit_or!(BitBoard, Square);
+bit_or!(BitBoard, &Square);
+bit_or!(&BitBoard, Square);
+bit_or!(&BitBoard, &Square);
+
+bit_xor!(BitBoard, BitBoard);
+bit_xor!(BitBoard, &BitBoard);
+bit_xor!(&BitBoard, BitBoard);
+bit_xor!(&BitBoard, &BitBoard);
+bit_xor!(BitBoard, Square);
+bit_xor!(BitBoard, &Square);
+bit_xor!(&BitBoard, Square);
+bit_xor!(&BitBoard, &Square);
+
+bit_and_assign!(BitBoard, BitBoard);
+bit_and_assign!(BitBoard, &BitBoard);
+bit_and_assign!(BitBoard, Square);
+bit_and_assign!(BitBoard, &Square);
+
+bit_or_assign!(BitBoard, BitBoard);
+bit_or_assign!(BitBoard, &BitBoard);
+bit_or_assign!(BitBoard, Square);
+bit_or_assign!(BitBoard, &Square);
+
+bit_xor_assign!(BitBoard, BitBoard);
+bit_xor_assign!(BitBoard, &BitBoard);
+bit_xor_assign!(BitBoard, Square);
+bit_xor_assign!(BitBoard, &Square);
+
+not!(BitBoard);
+not!(&BitBoard);
+
+#[cfg(test)]
+mod test {
+   use crate::square::Square;
+
+   use super::BitBoard;
+
+   #[test]
+   fn test_bitand() {
+      let left_bitboard = BitBoard(0b0001);
+      let right_bitboard = BitBoard(0b0011);
+      let square = Square::D4; // 1 << 0
+      let expected = BitBoard(0b0001);
+
+      assert_eq!(left_bitboard & right_bitboard, expected);
+      assert_eq!(left_bitboard & &right_bitboard, expected);
+      assert_eq!(&left_bitboard & right_bitboard, expected);
+      assert_eq!(&left_bitboard & &right_bitboard, expected);
+      assert_eq!(left_bitboard & square, expected);
+      assert_eq!(left_bitboard & &square, expected);
+      assert_eq!(&left_bitboard & square, expected);
+      assert_eq!(&left_bitboard & &square, expected);
    }
-}
 
-impl BitAnd for &BitBoard {
-   type Output = BitBoard;
+   #[test]
+   fn test_bitor() {
+      let left_bitboard = BitBoard(0b0001);
+      let right_bitboard = BitBoard(0b0011);
+      let square = Square::C4; // 1 << 1
+      let expected = BitBoard(0b0011);
 
-   #[inline]
-   fn bitand(self, other: &BitBoard) -> BitBoard {
-      BitBoard(self.0 & other.0)
+      assert_eq!(left_bitboard | right_bitboard, expected);
+      assert_eq!(left_bitboard | &right_bitboard, expected);
+      assert_eq!(&left_bitboard | right_bitboard, expected);
+      assert_eq!(&left_bitboard | &right_bitboard, expected);
+      assert_eq!(left_bitboard | square, expected);
+      assert_eq!(left_bitboard | &square, expected);
+      assert_eq!(&left_bitboard | square, expected);
+      assert_eq!(&left_bitboard | &square, expected);
    }
-}
 
-impl BitAnd<&BitBoard> for BitBoard {
-   type Output = BitBoard;
+   #[test]
+   fn test_bitxor() {
+      let left_bitboard = BitBoard(0b0011);
+      let right_bitboard = BitBoard(0b0001);
+      let square = Square::D4; // 1 << 0
+      let expected = BitBoard(0b0010);
 
-   #[inline]
-   fn bitand(self, other: &BitBoard) -> BitBoard {
-      BitBoard(self.0 & other.0)
+      assert_eq!(left_bitboard ^ right_bitboard, expected);
+      assert_eq!(left_bitboard ^ &right_bitboard, expected);
+      assert_eq!(&left_bitboard ^ right_bitboard, expected);
+      assert_eq!(&left_bitboard ^ &right_bitboard, expected);
+      assert_eq!(left_bitboard ^ square, expected);
+      assert_eq!(left_bitboard ^ &square, expected);
+      assert_eq!(&left_bitboard ^ square, expected);
+      assert_eq!(&left_bitboard ^ &square, expected);
    }
-}
 
-impl BitAnd<BitBoard> for &BitBoard {
-   type Output = BitBoard;
+   #[test]
+   fn test_not() {
+      let bitboard = BitBoard(0xF0F0);
+      let expected = BitBoard(0x0F0F);
 
-   #[inline]
-   fn bitand(self, other: BitBoard) -> BitBoard {
-      BitBoard(self.0 & other.0)
-   }
-}
-
-impl BitAnd<Square> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitand(self, other: Square) -> BitBoard {
-      BitBoard(self.0 & other as u16)
-   }
-}
-
-impl BitAnd<Square> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitand(self, other: Square) -> BitBoard {
-      BitBoard(self.0 & other as u16)
-   }
-}
-
-impl BitAnd<&Square> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitand(self, other: &Square) -> BitBoard {
-      BitBoard(self.0 & *other as u16)
-   }
-}
-
-impl BitAnd<&Square> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitand(self, other: &Square) -> BitBoard {
-      BitBoard(self.0 & *other as u16)
-   }
-}
-
-impl BitOr for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: BitBoard) -> BitBoard {
-      BitBoard(self.0 | other.0)
-   }
-}
-
-impl BitOr for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: &BitBoard) -> BitBoard {
-      BitBoard(self.0 | other.0)
-   }
-}
-
-impl BitOr<&BitBoard> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: &BitBoard) -> BitBoard {
-      BitBoard(self.0 | other.0)
-   }
-}
-
-impl BitOr<BitBoard> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: BitBoard) -> BitBoard {
-      BitBoard(self.0 | other.0)
-   }
-}
-
-impl BitOr<Square> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: Square) -> BitBoard {
-      BitBoard(self.0 | other as u16)
-   }
-}
-
-impl BitOr<Square> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: Square) -> BitBoard {
-      BitBoard(self.0 | other as u16)
-   }
-}
-
-impl BitOr<&Square> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: &Square) -> BitBoard {
-      BitBoard(self.0 | *other as u16)
-   }
-}
-
-impl BitOr<&Square> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitor(self, other: &Square) -> BitBoard {
-      BitBoard(self.0 | *other as u16)
-   }
-}
-
-impl BitXor for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: BitBoard) -> BitBoard {
-      BitBoard(self.0 ^ other.0)
-   }
-}
-
-impl BitXor for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: &BitBoard) -> BitBoard {
-      BitBoard(self.0 ^ other.0)
-   }
-}
-
-impl BitXor<&BitBoard> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: &BitBoard) -> BitBoard {
-      BitBoard(self.0 ^ other.0)
-   }
-}
-
-impl BitXor<BitBoard> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: BitBoard) -> BitBoard {
-      BitBoard(self.0 ^ other.0)
-   }
-}
-
-impl BitXor<Square> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: Square) -> BitBoard {
-      BitBoard(self.0 ^ other as u16)
-   }
-}
-
-impl BitXor<Square> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: Square) -> BitBoard {
-      BitBoard(self.0 ^ other as u16)
-   }
-}
-
-impl BitXor<&Square> for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: &Square) -> BitBoard {
-      BitBoard(self.0 ^ *other as u16)
-   }
-}
-
-impl BitXor<&Square> for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn bitxor(self, other: &Square) -> BitBoard {
-      BitBoard(self.0 ^ *other as u16)
-   }
-}
-
-impl BitAndAssign for BitBoard {
-   #[inline]
-   fn bitand_assign(&mut self, other: BitBoard) {
-      self.0 &= other.0;
-   }
-}
-
-impl BitAndAssign<&BitBoard> for BitBoard {
-   #[inline]
-   fn bitand_assign(&mut self, other: &BitBoard) {
-      self.0 &= other.0;
-   }
-}
-
-impl BitAndAssign<Square> for BitBoard {
-   #[inline]
-   fn bitand_assign(&mut self, other: Square) {
-      self.0 &= other as u16;
-   }
-}
-
-impl BitAndAssign<&Square> for BitBoard {
-   #[inline]
-   fn bitand_assign(&mut self, other: &Square) {
-      self.0 &= *other as u16;
-   }
-}
-
-impl BitOrAssign for BitBoard {
-   #[inline]
-   fn bitor_assign(&mut self, other: BitBoard) {
-      self.0 |= other.0;
-   }
-}
-
-impl BitOrAssign<&BitBoard> for BitBoard {
-   #[inline]
-   fn bitor_assign(&mut self, other: &BitBoard) {
-      self.0 |= other.0;
-   }
-}
-
-impl BitOrAssign<Square> for BitBoard {
-   #[inline]
-   fn bitor_assign(&mut self, other: Square) {
-      self.0 |= other as u16;
-   }
-}
-
-impl BitOrAssign<&Square> for BitBoard {
-   #[inline]
-   fn bitor_assign(&mut self, other: &Square) {
-      self.0 |= *other as u16;
-   }
-}
-
-impl BitXorAssign for BitBoard {
-   #[inline]
-   fn bitxor_assign(&mut self, other: BitBoard) {
-      self.0 ^= other.0;
-   }
-}
-
-impl BitXorAssign<&BitBoard> for BitBoard {
-   #[inline]
-   fn bitxor_assign(&mut self, other: &BitBoard) {
-      self.0 ^= other.0;
-   }
-}
-
-impl BitXorAssign<Square> for BitBoard {
-   #[inline]
-   fn bitxor_assign(&mut self, other: Square) {
-      self.0 ^= other as u16;
-   }
-}
-
-impl BitXorAssign<&Square> for BitBoard {
-   #[inline]
-   fn bitxor_assign(&mut self, other: &Square) {
-      self.0 ^= *other as u16;
-   }
-}
-
-impl Not for BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn not(self) -> BitBoard {
-      BitBoard(!self.0)
-   }
-}
-
-impl Not for &BitBoard {
-   type Output = BitBoard;
-
-   #[inline]
-   fn not(self) -> BitBoard {
-      BitBoard(!self.0)
+      assert_eq!(!bitboard, expected);
+      assert_eq!(!&bitboard, expected);
    }
 }

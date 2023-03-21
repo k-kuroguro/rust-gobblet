@@ -183,33 +183,40 @@ impl Board {
    }
 }
 
-impl IntoIterator for Board {
-   type Item = PieceSet;
-   type IntoIter = vec::IntoIter<PieceSet>;
+macro_rules! into_iterator {
+   ($type:ty) => {
+      impl IntoIterator for $type {
+         type Item = PieceSet;
+         type IntoIter = vec::IntoIter<PieceSet>;
 
-   fn into_iter(self) -> Self::IntoIter {
-      let mut result = Vec::new();
-      for square in ALL_SQUARES {
-         let mut pieces = Vec::new();
-         for (i, bitboard) in self.bitboards.iter().enumerate() {
-            if bitboard & square != EMPTY {
-               let color = if i <= 3 { Color::Black } else { Color::White };
-               let piece = match i % 4 {
-                  0 => PieceKind::Tiny,
-                  1 => PieceKind::Small,
-                  2 => PieceKind::Medium,
-                  3 => PieceKind::Big,
-                  _ => unreachable!(),
-               };
-               pieces.push(Piece::new(color, piece));
+         fn into_iter(self) -> Self::IntoIter {
+            let mut result = Vec::new();
+            for square in ALL_SQUARES {
+               let mut pieces = Vec::new();
+               for (i, bitboard) in self.bitboards.iter().enumerate() {
+                  if bitboard & square != EMPTY {
+                     let color = if i <= 3 { Color::Black } else { Color::White };
+                     let piece = match i % 4 {
+                        0 => PieceKind::Tiny,
+                        1 => PieceKind::Small,
+                        2 => PieceKind::Medium,
+                        3 => PieceKind::Big,
+                        _ => unreachable!(),
+                     };
+                     pieces.push(Piece::new(color, piece));
+                  }
+               }
+               pieces.sort_by(|a, b| (a.kind as u8).cmp(&(b.kind as u8)));
+               result.push(PieceSet::from_vec(pieces))
             }
+            result.into_iter()
          }
-         pieces.sort_by(|a, b| (a.kind as u8).cmp(&(b.kind as u8)));
-         result.push(PieceSet::from_vec(pieces))
       }
-      result.into_iter()
-   }
+   };
 }
+
+into_iterator!(Board);
+into_iterator!(&Board);
 
 #[cfg(test)]
 mod tests {
