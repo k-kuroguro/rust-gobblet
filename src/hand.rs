@@ -1,9 +1,11 @@
+use std::array;
+
 use crate::{
    color::Color,
    piece::{Piece, PieceKind, PieceSet},
 };
 
-const PIECE_SET_NUM: usize = 3;
+pub const PIECE_SET_NUM: usize = 3;
 const INITIAL_SET: [[Piece; 4]; 2] = [
    [
       Piece {
@@ -45,13 +47,13 @@ const INITIAL_SET: [[Piece; 4]; 2] = [
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct Hand {
-   pieces: [PieceSet; PIECE_SET_NUM],
+   sets: [PieceSet; PIECE_SET_NUM],
 }
 
 impl Hand {
    pub fn new(color: Color) -> Self {
       Self {
-         pieces: [
+         sets: [
             PieceSet::from_slice(&INITIAL_SET[color as usize]),
             PieceSet::from_slice(&INITIAL_SET[color as usize]),
             PieceSet::from_slice(&INITIAL_SET[color as usize]),
@@ -60,10 +62,28 @@ impl Hand {
    }
 
    pub fn peek(&self, i: usize) -> Option<&Piece> {
-      self.pieces[i.clamp(0, PIECE_SET_NUM - 1)].peek()
+      self.sets[i.clamp(0, PIECE_SET_NUM - 1)].peek()
    }
 
    pub fn pop(&mut self, i: usize) -> Option<Piece> {
-      self.pieces[i.clamp(0, PIECE_SET_NUM - 1)].pop()
+      self.sets[i.clamp(0, PIECE_SET_NUM - 1)].pop()
+   }
+}
+
+impl IntoIterator for Hand {
+   type Item = PieceSet;
+   type IntoIter = array::IntoIter<PieceSet, PIECE_SET_NUM>;
+
+   fn into_iter(self) -> Self::IntoIter {
+      self.sets.into_iter()
+   }
+}
+
+impl IntoIterator for &Hand {
+   type Item = PieceSet;
+   type IntoIter = array::IntoIter<PieceSet, PIECE_SET_NUM>;
+
+   fn into_iter(self) -> Self::IntoIter {
+      self.sets.clone().into_iter()
    }
 }
