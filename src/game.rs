@@ -69,17 +69,16 @@ impl Game {
             }
          },
          Action::PlaceFromHand { index, to } => {
-            if let Some(piece) = self.hands[self.turn as usize].pop(index) {
+            if let Some(&piece) = self.hands[self.turn as usize].peek(index) {
                match self.board.place(piece, to) {
                   Ok(board) => {
+                     self.hands[self.turn as usize].pop(index);
                      self.board = board;
                   }
                   Err(err) => {
                      return Err(err);
                   }
                };
-            } else {
-               return Err(Error::EmptyHand);
             }
          }
       };
