@@ -28,6 +28,10 @@ impl Board {
       }
    }
 
+   pub fn exists(&self, square: Square) -> bool {
+      self.combined & square != EMPTY
+   }
+
    pub fn place(&self, piece: Piece, to: Square) -> Result {
       let mut board = *self;
       if !board.can_place(piece, to) {
