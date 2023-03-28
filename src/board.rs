@@ -139,7 +139,7 @@ impl Board {
       };
       let kind = {
          let mut result = PieceKind::Tiny;
-         for kind in PieceKind::ALL {
+         for &kind in PieceKind::ALL.iter().rev() {
             if self.bitboards[kind as usize + 4 * color as usize] & square != EMPTY {
                result = kind;
             }
