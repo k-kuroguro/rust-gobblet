@@ -127,6 +127,29 @@ impl Board {
       false
    }
 
+   pub fn get_top(&self, square: Square) -> Option<Piece> {
+      if self.combined & square == EMPTY {
+         return None;
+      }
+
+      let color = if self.color_combined[Color::Black as usize] & square != EMPTY {
+         Color::Black
+      } else {
+         Color::White
+      };
+      let kind = {
+         let mut result = PieceKind::Tiny;
+         for kind in PieceKind::ALL {
+            if self.bitboards[kind as usize + 4 * color as usize] & square != EMPTY {
+               result = kind;
+            }
+         }
+         result
+      };
+
+      Some(Piece::new(color, kind))
+   }
+
    fn set(&mut self, piece: Piece, square: Square) {
       let Piece { color, kind } = piece;
       self.bitboards[kind as usize + 4 * color as usize] |= square;
@@ -151,29 +174,6 @@ impl Board {
          result
       });
       self.combined = self.color_combined[0] | self.color_combined[1];
-   }
-
-   fn get_top(&self, square: Square) -> Option<Piece> {
-      if self.combined & square == EMPTY {
-         return None;
-      }
-
-      let color = if self.color_combined[Color::Black as usize] & square != EMPTY {
-         Color::Black
-      } else {
-         Color::White
-      };
-      let kind = {
-         let mut result = PieceKind::Tiny;
-         for kind in PieceKind::ALL {
-            if self.bitboards[kind as usize + 4 * color as usize] & square != EMPTY {
-               result = kind;
-            }
-         }
-         result
-      };
-
-      Some(Piece::new(color, kind))
    }
 
    fn has_3_in_a_row(&self, color: Color, square: Square) -> bool {
