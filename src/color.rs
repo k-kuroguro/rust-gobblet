@@ -1,5 +1,3 @@
-pub const COLOR_NUM: usize = 2;
-
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub enum Color {
    Black = 0,
@@ -7,12 +5,14 @@ pub enum Color {
 }
 
 impl Color {
-   pub fn reverse(&self) -> Self {
+   pub const NUM: usize = 2;
+
+   pub const ALL: [Self; Self::NUM] = [Self::Black, Self::White];
+
+   pub const fn reverse(&self) -> Self {
       match self {
-         Color::Black => Color::White,
-         Color::White => Color::Black,
+         Self::Black => Self::White,
+         Self::White => Self::Black,
       }
    }
 }
-
-pub const ALL_COLORS: [Color; COLOR_NUM] = [Color::Black, Color::White];

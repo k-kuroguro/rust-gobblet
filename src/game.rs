@@ -16,7 +16,7 @@ pub enum Status {
 #[derive(Clone, Debug)]
 pub struct Game {
    board: Board,
-   hands: [Hand; 2],
+   hands: [Hand; Color::NUM],
    turn: Color,
    status: Status,
 }

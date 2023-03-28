@@ -6,7 +6,7 @@ use crate::{
 };
 
 pub const PIECE_SET_NUM: usize = 3;
-const INITIAL_SET: [[Piece; 4]; 2] = [
+const INITIAL_SETS: [[Piece; 4]; 2] = [
    [
       Piece {
          color: Color::Black,
@@ -54,9 +54,9 @@ impl Hand {
    pub fn new(color: Color) -> Self {
       Self {
          sets: [
-            PieceSet::from_slice(&INITIAL_SET[color as usize]),
-            PieceSet::from_slice(&INITIAL_SET[color as usize]),
-            PieceSet::from_slice(&INITIAL_SET[color as usize]),
+            PieceSet::from_slice(&INITIAL_SETS[color as usize]),
+            PieceSet::from_slice(&INITIAL_SETS[color as usize]),
+            PieceSet::from_slice(&INITIAL_SETS[color as usize]),
          ],
       }
    }

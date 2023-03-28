@@ -1,7 +1,5 @@
 use crate::color::Color;
 
-pub const PIECE_KIND_NUM: usize = 4;
-
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub enum PieceKind {
    Tiny = 0,
@@ -10,12 +8,11 @@ pub enum PieceKind {
    Big = 3,
 }
 
-pub const ALL_PIECE_KINDS: [PieceKind; PIECE_KIND_NUM] = [
-   PieceKind::Big,
-   PieceKind::Medium,
-   PieceKind::Small,
-   PieceKind::Tiny,
-];
+impl PieceKind {
+   pub const NUM: usize = 4;
+
+   pub const ALL: [Self; Self::NUM] = [Self::Big, Self::Medium, Self::Small, Self::Tiny];
+}
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub struct Piece {
@@ -24,7 +21,7 @@ pub struct Piece {
 }
 
 impl Piece {
-   pub fn new(color: Color, kind: PieceKind) -> Self {
+   pub const fn new(color: Color, kind: PieceKind) -> Self {
       Self { color, kind }
    }
 }

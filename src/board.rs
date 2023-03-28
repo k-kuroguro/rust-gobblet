@@ -2,28 +2,28 @@ use std::{result, vec};
 
 use crate::{
    bitboard::{BitBoard, EMPTY, LINE_MASKS},
-   color::{Color, ALL_COLORS, COLOR_NUM},
+   color::Color,
    error::Error,
-   piece::{Piece, PieceKind, PieceSet, ALL_PIECE_KINDS, PIECE_KIND_NUM},
-   square::{Square, ALL_SQUARES},
+   piece::{Piece, PieceKind, PieceSet},
+   square::Square,
 };
-
-pub const BOARD_SIZE: usize = 4;
 
 type Result = result::Result<Board, Error>;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Board {
-   bitboards: [BitBoard; 2 * PIECE_KIND_NUM], // [Black_Tiny, ..., Black_Big, White_Tiny, ..., White_Big]
-   color_combined: [BitBoard; COLOR_NUM],     // [Black, White]
+   bitboards: [BitBoard; 2 * PieceKind::NUM], // [Black_Tiny, ..., Black_Big, White_Tiny, ..., White_Big]
+   color_combined: [BitBoard; Color::NUM],    // [Black, White]
    combined: BitBoard,
 }
 
 impl Board {
+   pub const SIZE: usize = 4;
+
    pub fn new() -> Self {
       Self {
-         bitboards: [EMPTY; 2 * PIECE_KIND_NUM],
-         color_combined: [EMPTY; COLOR_NUM],
+         bitboards: [EMPTY; 2 * PieceKind::NUM],
+         color_combined: [EMPTY; Color::NUM],
          combined: EMPTY,
       }
    }
@@ -136,9 +136,9 @@ impl Board {
    }
 
    fn combine(&mut self) {
-      self.color_combined = ALL_COLORS.map(|color| {
+      self.color_combined = Color::ALL.map(|color| {
          let mut result = self.bitboards[PieceKind::Big as usize + 4 * color as usize];
-         for kind in &ALL_PIECE_KINDS[1..] {
+         for kind in &PieceKind::ALL[1..] {
             let bigger = (*kind as usize + 1..=PieceKind::Big as usize).fold(EMPTY, |acc, kind| {
                acc | self.bitboards[kind + 4 * color.reverse() as usize]
             });
@@ -161,7 +161,7 @@ impl Board {
       };
       let kind = {
          let mut result = PieceKind::Tiny;
-         for kind in ALL_PIECE_KINDS {
+         for kind in PieceKind::ALL {
             if self.bitboards[kind as usize + 4 * color as usize] & square != EMPTY {
                result = kind;
             }
@@ -191,7 +191,7 @@ macro_rules! into_iterator {
 
          fn into_iter(self) -> Self::IntoIter {
             let mut result = Vec::new();
-            for square in ALL_SQUARES {
+            for square in Square::ALL {
                let mut pieces = Vec::new();
                for (i, bitboard) in self.bitboards.iter().enumerate() {
                   if bitboard & square != EMPTY {
