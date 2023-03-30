@@ -5,7 +5,7 @@
 //! This places black piece on B2 and white piece on C3 from hands.
 //!
 //! ```
-//! use gobblet::{Action, Color, Game, Piece, Size, Square, Status};
+//! use gobblet::{Action, Color, Game, Piece, Size, Square};
 //!
 //! let mut game = Game::new();
 //!
