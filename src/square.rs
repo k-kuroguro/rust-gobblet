@@ -1,16 +1,19 @@
-// +----+----+----+----+-> X
-// | A1 | B1 | C1 | D1 |
-// +----+----+----+----+
-// | A2 | B2 | C2 | D2 |
-// +----+----+----+----+
-// | A3 | B3 | C3 | D3 |
-// +----+----+----+----+
-// | A4 | B4 | C4 | D4 |
-// +----+----+----+----+
-// V Y
-
 use std::fmt::{Display, Formatter, Result};
 
+/// Represents a square on the board.
+///
+/// ``` text
+/// +----+----+----+----+-> X
+/// | A1 | B1 | C1 | D1 |
+/// +----+----+----+----+
+/// | A2 | B2 | C2 | D2 |
+/// +----+----+----+----+
+/// | A3 | B3 | C3 | D3 |
+/// +----+----+----+----+
+/// | A4 | B4 | C4 | D4 |
+/// +----+----+----+----+
+/// V Y
+/// ```
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub enum Square {
    A1 = 1 << 15,
@@ -32,6 +35,7 @@ pub enum Square {
 }
 
 impl Square {
+   /// An array that includes all the squares in the order of A1, B1, C1, ... .
    pub const ALL: [Self; 16] = [
       Self::A1,
       Self::B1,
@@ -51,6 +55,7 @@ impl Square {
       Self::D4,
    ];
 
+   /// Returns a square corresponding to the given XY coordinates.
    pub fn from_pos(x: usize, y: usize) -> Self {
       Self::ALL[x.min(3) + 4 * y.min(3)]
    }

@@ -1,29 +1,33 @@
 #[macro_use]
 mod macros;
 
-use crate::square::Square;
+use crate::Square;
 
+/// A simple bitboard.
+/// You can work with this using bitwise operators.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub struct BitBoard(u16);
 
-pub const EMPTY: BitBoard = BitBoard(0);
-pub const LINE_MASKS: [BitBoard; 10] = [
-   // Cols
-   BitBoard(0x8888),
-   BitBoard(0x4444),
-   BitBoard(0x2222),
-   BitBoard(0x1111),
-   // Rows
-   BitBoard(0xF000),
-   BitBoard(0x0F00),
-   BitBoard(0x00F0),
-   BitBoard(0x000F),
-   // Diagonals
-   BitBoard(0x8421),
-   BitBoard(0x1248),
-];
-
 impl BitBoard {
+   pub const EMPTY: Self = Self(0);
+
+   /// Masks for the rows, columns, and diagonals of the board.
+   pub const LINE_MASKS: [Self; 10] = [
+      // Cols
+      Self(0x8888),
+      Self(0x4444),
+      Self(0x2222),
+      Self(0x1111),
+      // Rows
+      Self(0xF000),
+      Self(0x0F00),
+      Self(0x00F0),
+      Self(0x000F),
+      // Diagonals
+      Self(0x8421),
+      Self(0x1248),
+   ];
+
    pub fn new(n: u16) -> Self {
       Self(n)
    }
@@ -32,6 +36,7 @@ impl BitBoard {
       self.0.count_ones() as u8
    }
 
+   /// Returns a bitboard with the bit corresponding to the given square.
    pub fn from_square(square: Square) -> Self {
       Self(square as u16)
    }

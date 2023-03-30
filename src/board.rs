@@ -1,19 +1,14 @@
 use std::{result, vec};
 
-use crate::{
-   bitboard::{BitBoard, EMPTY, LINE_MASKS},
-   color::Color,
-   error::Error,
-   piece::{Piece, PieceKind, PieceSet},
-   square::Square,
-};
+use crate::{BitBoard, Color, Error, Piece, PieceSet, Size, Square};
 
 type Result = result::Result<Board, Error>;
 
+/// A representation of a Gobblet board.
 #[derive(Clone, Copy, Debug)]
 pub struct Board {
-   bitboards: [BitBoard; 2 * PieceKind::NUM], // [Black_Tiny, ..., Black_Big, White_Tiny, ..., White_Big]
-   color_combined: [BitBoard; Color::NUM],    // [Black, White]
+   bitboards: [BitBoard; 2 * Size::NUM], // [Black_Tiny, ..., Black_Big, White_Tiny, ..., White_Big]
+   color_combined: [BitBoard; Color::NUM], // [Black, White]
    combined: BitBoard,
 }
 
@@ -22,16 +17,34 @@ impl Board {
 
    pub fn new() -> Self {
       Self {
-         bitboards: [EMPTY; 2 * PieceKind::NUM],
-         color_combined: [EMPTY; Color::NUM],
-         combined: EMPTY,
+         bitboards: [BitBoard::EMPTY; 2 * Size::NUM],
+         color_combined: [BitBoard::EMPTY; Color::NUM],
+         combined: BitBoard::EMPTY,
       }
    }
 
-   pub fn exists(&self, square: Square) -> bool {
-      self.combined & square != EMPTY
+   /// Returns a bitboard with only the given piece.
+   pub fn pieces(&self, piece: Piece) -> BitBoard {
+      self.bitboards[piece.size as usize + 4 * piece.color as usize]
    }
 
+   /// Returns a bitboard viewed from above with only the given color.
+   /// If a piece of a different color is stacked on top, the bit will be 0.
+   pub fn color_combined(&self, color: Color) -> BitBoard {
+      self.color_combined[color as usize]
+   }
+
+   /// Returns a bitboard viewed from above.
+   pub fn combined(&self) -> BitBoard {
+      self.combined
+   }
+
+   /// Checks if any piece exists on the given square.
+   pub fn exists(&self, square: Square) -> bool {
+      self.combined & square != BitBoard::EMPTY
+   }
+
+   /// Places a piece to the given square and returns the new board.
    pub fn place(&self, piece: Piece, to: Square) -> Result {
       let mut board = *self;
       if !board.can_place(piece, to) {
@@ -41,6 +54,7 @@ impl Board {
       Ok(board)
    }
 
+   /// Moves a piece from one square to another and returns the new board.
    pub fn r#move(&self, from: Square, to: Square) -> Result {
       let mut board = *self;
       let piece = match board.get_top(from) {
@@ -60,66 +74,38 @@ impl Board {
       Ok(board)
    }
 
+   /// Checks if a piece can be placed on the given square.
    pub fn can_place(&self, piece: Piece, to: Square) -> bool {
-      if self.combined & to == EMPTY {
+      if self.combined & to == BitBoard::EMPTY {
          return true;
       }
 
-      let Piece { color, kind } = piece;
+      let Piece { color, size } = piece;
 
-      if let PieceKind::Tiny = kind {
-         return false;
-      }
-      if self.color_combined[color.reverse() as usize] & to != EMPTY {
+      if self.color_combined[color.reverse() as usize] & to != BitBoard::EMPTY {
          if self.has_3_in_a_row(color.reverse(), to) {
-            for x in (kind as usize..=PieceKind::Big as usize).rev() {
-               if self.bitboards[x + 4 * color.reverse() as usize] & to != EMPTY {
-                  return false;
-               }
-            }
-            return true;
+            size > self.get_top(to).unwrap().size
+         } else {
+            false
          }
-         return false;
       } else {
-         for x in (kind as usize..=PieceKind::Big as usize).rev() {
-            if self.bitboards[x + 4 * color as usize] & to != EMPTY {
-               return false;
-            }
-         }
-         return true;
+         size > self.get_top(to).unwrap().size
       }
    }
 
+   /// Checks if a piece can be moved to the given square.
    pub fn can_move(&self, piece: Piece, to: Square) -> bool {
-      if self.combined & to == EMPTY {
-         return true;
-      }
-
-      let Piece { color, kind } = piece;
-
-      if let PieceKind::Tiny = kind {
-         return false;
-      }
-      if self.color_combined[color.reverse() as usize] & to != EMPTY {
-         for x in (kind as usize..=PieceKind::Big as usize).rev() {
-            if self.bitboards[x + 4 * color.reverse() as usize] & to != EMPTY {
-               return false;
-            }
-         }
-         return true;
+      if let Some(top) = self.get_top(to) {
+         piece.size > top.size
       } else {
-         for x in (kind as usize..=PieceKind::Big as usize).rev() {
-            if self.bitboards[x + 4 * color as usize] & to != EMPTY {
-               return false;
-            }
-         }
-         return true;
+         true
       }
    }
 
+   /// Checks if a player of the given color has won the game.
    pub fn has_won(&self, color: Color) -> bool {
       let color_combined = &self.color_combined[color as usize];
-      for mask in LINE_MASKS {
+      for mask in BitBoard::LINE_MASKS {
          if color_combined & mask == mask {
             return true;
          }
@@ -127,49 +113,52 @@ impl Board {
       false
    }
 
+   /// Returns the top piece on the given square, or None if there is no piece.
    pub fn get_top(&self, square: Square) -> Option<Piece> {
-      if self.combined & square == EMPTY {
+      if self.combined & square == BitBoard::EMPTY {
          return None;
       }
 
-      let color = if self.color_combined[Color::Black as usize] & square != EMPTY {
+      let color = if self.color_combined[Color::Black as usize] & square != BitBoard::EMPTY {
          Color::Black
       } else {
          Color::White
       };
-      let kind = {
-         let mut result = PieceKind::Tiny;
-         for &kind in PieceKind::ALL.iter().rev() {
-            if self.bitboards[kind as usize + 4 * color as usize] & square != EMPTY {
-               result = kind;
+      let size = {
+         let mut result = Size::Tiny;
+         for size in Size::ALL {
+            if self.pieces(Piece::new(color, size)) & square != BitBoard::EMPTY {
+               result = size;
             }
          }
          result
       };
 
-      Some(Piece::new(color, kind))
+      Some(Piece::new(color, size))
    }
 
    fn set(&mut self, piece: Piece, square: Square) {
-      let Piece { color, kind } = piece;
-      self.bitboards[kind as usize + 4 * color as usize] |= square;
+      let Piece { color, size } = piece;
+      self.bitboards[size as usize + 4 * color as usize] |= square;
       self.combine();
    }
 
    fn unset(&mut self, piece: Piece, square: Square) {
-      let Piece { color, kind } = piece;
-      self.bitboards[kind as usize + 4 * color as usize] &= !BitBoard::from_square(square);
+      let Piece { color, size } = piece;
+      self.bitboards[size as usize + 4 * color as usize] &= !BitBoard::from_square(square);
       self.combine();
    }
 
    fn combine(&mut self) {
       self.color_combined = Color::ALL.map(|color| {
-         let mut result = self.bitboards[PieceKind::Big as usize + 4 * color as usize];
-         for kind in &PieceKind::ALL[1..] {
-            let bigger = (*kind as usize + 1..=PieceKind::Big as usize).fold(EMPTY, |acc, kind| {
-               acc | self.bitboards[kind + 4 * color.reverse() as usize]
-            });
-            result |= !bigger & self.bitboards[*kind as usize + 4 * color as usize];
+         let mut result = self.pieces(Piece::new(color, Size::Big));
+         for &size in Size::ALL[..3].iter().rev() {
+            let bigger = Size::ALL[size as usize + 1..]
+               .iter()
+               .fold(BitBoard::EMPTY, |acc, &size| {
+                  acc | self.pieces(Piece::new(color.reverse(), size))
+               });
+            result |= !bigger & self.pieces(Piece::new(color, size));
          }
          result
       });
@@ -178,8 +167,8 @@ impl Board {
 
    fn has_3_in_a_row(&self, color: Color, square: Square) -> bool {
       let color_combined = &self.color_combined[color as usize];
-      for mask in LINE_MASKS {
-         if mask & square != EMPTY && (color_combined & mask).popcount() == 3 {
+      for mask in BitBoard::LINE_MASKS {
+         if mask & square != BitBoard::EMPTY && (color_combined & mask).popcount() == 3 {
             return true;
          }
       }
@@ -198,19 +187,19 @@ macro_rules! into_iterator {
             for square in Square::ALL {
                let mut pieces = Vec::new();
                for (i, bitboard) in self.bitboards.iter().enumerate() {
-                  if bitboard & square != EMPTY {
+                  if bitboard & square != BitBoard::EMPTY {
                      let color = if i <= 3 { Color::Black } else { Color::White };
                      let piece = match i % 4 {
-                        0 => PieceKind::Tiny,
-                        1 => PieceKind::Small,
-                        2 => PieceKind::Medium,
-                        3 => PieceKind::Big,
+                        0 => Size::Tiny,
+                        1 => Size::Small,
+                        2 => Size::Medium,
+                        3 => Size::Big,
                         _ => unreachable!(),
                      };
                      pieces.push(Piece::new(color, piece));
                   }
                }
-               pieces.sort_by(|a, b| (a.kind as u8).cmp(&(b.kind as u8)));
+               pieces.sort_by(|a, b| (a.size as u8).cmp(&(b.size as u8)));
                result.push(PieceSet::from_vec(pieces))
             }
             result.into_iter()
@@ -228,7 +217,7 @@ mod tests {
       bitboard::BitBoard,
       board::Board,
       color::Color,
-      piece::{Piece, PieceKind, PieceSet},
+      piece::{Piece, PieceSet, Size},
       square::Square,
    };
 
@@ -239,10 +228,10 @@ mod tests {
 
       // Place on empty square.
       board = board
-         .place(Piece::new(Color::Black, PieceKind::Big), Square::C2)
+         .place(Piece::new(Color::Black, Size::Big), Square::C2)
          .unwrap();
       board = board
-         .place(Piece::new(Color::White, PieceKind::Small), Square::B3)
+         .place(Piece::new(Color::White, Size::Small), Square::B3)
          .unwrap();
       assert_eq!(
          board.bitboards,
@@ -265,7 +254,7 @@ mod tests {
 
       // Place on same colored piece.
       board = board
-         .place(Piece::new(Color::White, PieceKind::Medium), Square::B3)
+         .place(Piece::new(Color::White, Size::Medium), Square::B3)
          .unwrap();
       assert_eq!(
          board.bitboards,
@@ -287,23 +276,23 @@ mod tests {
       assert_eq!(board.combined, BitBoard::new(0x0240));
 
       // Place on different colored piece.
-      error = board.place(Piece::new(Color::Black, PieceKind::Big), Square::B3);
+      error = board.place(Piece::new(Color::Black, Size::Big), Square::B3);
       assert!(error.is_err());
 
       // Make a line.
       board = board
-         .place(Piece::new(Color::Black, PieceKind::Tiny), Square::A3)
+         .place(Piece::new(Color::Black, Size::Tiny), Square::A3)
          .unwrap();
       board = board
-         .place(Piece::new(Color::Black, PieceKind::Tiny), Square::C3)
+         .place(Piece::new(Color::Black, Size::Tiny), Square::C3)
          .unwrap();
       board = board
-         .place(Piece::new(Color::Black, PieceKind::Tiny), Square::D3)
+         .place(Piece::new(Color::Black, Size::Tiny), Square::D3)
          .unwrap();
 
       // Place on different colored piece.
       board = board
-         .place(Piece::new(Color::White, PieceKind::Small), Square::A3)
+         .place(Piece::new(Color::White, Size::Small), Square::A3)
          .unwrap();
       assert_eq!(
          board.bitboards,
@@ -325,9 +314,9 @@ mod tests {
       assert_eq!(board.combined, BitBoard::new(0x02F0));
 
       // Place on bigger size piece.
-      error = board.place(Piece::new(Color::White, PieceKind::Medium), Square::B3);
+      error = board.place(Piece::new(Color::White, Size::Medium), Square::B3);
       assert!(error.is_err());
-      error = board.place(Piece::new(Color::Black, PieceKind::Medium), Square::C2);
+      error = board.place(Piece::new(Color::Black, Size::Medium), Square::C2);
       assert!(error.is_err());
    }
 
@@ -342,7 +331,7 @@ mod tests {
 
       // Move to empty square.
       board = board
-         .place(Piece::new(Color::Black, PieceKind::Big), Square::A1)
+         .place(Piece::new(Color::Black, Size::Big), Square::A1)
          .unwrap();
       board = board.r#move(Square::A1, Square::A2).unwrap();
       assert_eq!(
@@ -366,10 +355,10 @@ mod tests {
 
       // Move to square with a smaller piece.
       board = board
-         .place(Piece::new(Color::White, PieceKind::Tiny), Square::A3)
+         .place(Piece::new(Color::White, Size::Tiny), Square::A3)
          .unwrap();
       board = board
-         .place(Piece::new(Color::White, PieceKind::Medium), Square::A3)
+         .place(Piece::new(Color::White, Size::Medium), Square::A3)
          .unwrap();
       board = board.r#move(Square::A2, Square::A3).unwrap();
       assert_eq!(
@@ -393,7 +382,7 @@ mod tests {
 
       // Move to square with a bigger piece.
       board = board
-         .place(Piece::new(Color::White, PieceKind::Medium), Square::C4)
+         .place(Piece::new(Color::White, Size::Medium), Square::C4)
          .unwrap();
       error = board.r#move(Square::C4, Square::A3);
       assert!(error.is_err());
@@ -424,21 +413,21 @@ mod tests {
    fn test_iter() {
       let mut board = Board::new();
       board = board
-         .place(Piece::new(Color::White, PieceKind::Tiny), Square::A3)
+         .place(Piece::new(Color::White, Size::Tiny), Square::A3)
          .unwrap();
       board = board
-         .place(Piece::new(Color::Black, PieceKind::Medium), Square::A2)
-         .unwrap();
-      board = board.r#move(Square::A2, Square::A3).unwrap();
-      board = board
-         .place(Piece::new(Color::White, PieceKind::Big), Square::A2)
+         .place(Piece::new(Color::Black, Size::Medium), Square::A2)
          .unwrap();
       board = board.r#move(Square::A2, Square::A3).unwrap();
       board = board
-         .place(Piece::new(Color::Black, PieceKind::Big), Square::C1)
+         .place(Piece::new(Color::White, Size::Big), Square::A2)
+         .unwrap();
+      board = board.r#move(Square::A2, Square::A3).unwrap();
+      board = board
+         .place(Piece::new(Color::Black, Size::Big), Square::C1)
          .unwrap();
       board = board
-         .place(Piece::new(Color::White, PieceKind::Small), Square::B4)
+         .place(Piece::new(Color::White, Size::Small), Square::B4)
          .unwrap();
 
       for (i, set) in board.into_iter().enumerate() {
@@ -446,23 +435,23 @@ mod tests {
             2 => {
                assert_eq!(
                   set,
-                  PieceSet::from_slice(&[Piece::new(Color::Black, PieceKind::Big)])
+                  PieceSet::from_slice(&[Piece::new(Color::Black, Size::Big)])
                )
             }
             8 => {
                assert_eq!(
                   set,
                   PieceSet::from_slice(&[
-                     Piece::new(Color::White, PieceKind::Tiny),
-                     Piece::new(Color::Black, PieceKind::Medium),
-                     Piece::new(Color::White, PieceKind::Big)
+                     Piece::new(Color::White, Size::Tiny),
+                     Piece::new(Color::Black, Size::Medium),
+                     Piece::new(Color::White, Size::Big)
                   ])
                )
             }
             13 => {
                assert_eq!(
                   set,
-                  PieceSet::from_slice(&[Piece::new(Color::White, PieceKind::Small)])
+                  PieceSet::from_slice(&[Piece::new(Color::White, Size::Small)])
                )
             }
             _ => {

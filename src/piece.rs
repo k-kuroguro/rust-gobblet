@@ -1,31 +1,36 @@
-use crate::color::Color;
+use crate::Color;
 
+/// Represents the size of piece.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
-pub enum PieceKind {
+pub enum Size {
    Tiny = 0,
    Small = 1,
    Medium = 2,
    Big = 3,
 }
 
-impl PieceKind {
+impl Size {
    pub const NUM: usize = 4;
 
-   pub const ALL: [Self; Self::NUM] = [Self::Big, Self::Medium, Self::Small, Self::Tiny];
+   /// An array that includes all the sizes in the order of Tiny, Small, Medium, Big.
+   pub const ALL: [Self; Self::NUM] = [Self::Tiny, Self::Small, Self::Medium, Self::Big];
 }
 
+/// Represents the piece that includes color and size.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub struct Piece {
    pub color: Color,
-   pub kind: PieceKind,
+   pub size: Size,
 }
 
 impl Piece {
-   pub const fn new(color: Color, kind: PieceKind) -> Self {
-      Self { color, kind }
+   pub const fn new(color: Color, size: Size) -> Self {
+      Self { color, size }
    }
 }
 
+/// Represents the set of piece.
+/// This is used like a stack.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct PieceSet(Vec<Piece>);
 

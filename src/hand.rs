@@ -1,56 +1,56 @@
 use std::array;
 
-use crate::{
-   color::Color,
-   piece::{Piece, PieceKind, PieceSet},
-};
+use crate::{Color, Piece, PieceSet, Size};
 
-pub const PIECE_SET_NUM: usize = 3;
 const INITIAL_SETS: [[Piece; 4]; 2] = [
    [
       Piece {
          color: Color::Black,
-         kind: PieceKind::Tiny,
+         size: Size::Tiny,
       },
       Piece {
          color: Color::Black,
-         kind: PieceKind::Small,
+         size: Size::Small,
       },
       Piece {
          color: Color::Black,
-         kind: PieceKind::Medium,
+         size: Size::Medium,
       },
       Piece {
          color: Color::Black,
-         kind: PieceKind::Big,
+         size: Size::Big,
       },
    ],
    [
       Piece {
          color: Color::White,
-         kind: PieceKind::Tiny,
+         size: Size::Tiny,
       },
       Piece {
          color: Color::White,
-         kind: PieceKind::Small,
+         size: Size::Small,
       },
       Piece {
          color: Color::White,
-         kind: PieceKind::Medium,
+         size: Size::Medium,
       },
       Piece {
          color: Color::White,
-         kind: PieceKind::Big,
+         size: Size::Big,
       },
    ],
 ];
 
+/// Represents player's hand.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct Hand {
-   sets: [PieceSet; PIECE_SET_NUM],
+   sets: [PieceSet; Self::PIECE_SET_NUM],
 }
 
 impl Hand {
+   /// The number of piece sets in player's hand.
+   pub const PIECE_SET_NUM: usize = 3;
+
    pub fn new(color: Color) -> Self {
       Self {
          sets: [
@@ -61,18 +61,20 @@ impl Hand {
       }
    }
 
+   /// Fetch the top piece without removing it.
    pub fn peek(&self, i: usize) -> Option<&Piece> {
-      self.sets[i.clamp(0, PIECE_SET_NUM - 1)].peek()
+      self.sets[i.clamp(0, Self::PIECE_SET_NUM - 1)].peek()
    }
 
+   /// Returns and removes the top piece.
    pub fn pop(&mut self, i: usize) -> Option<Piece> {
-      self.sets[i.clamp(0, PIECE_SET_NUM - 1)].pop()
+      self.sets[i.clamp(0, Self::PIECE_SET_NUM - 1)].pop()
    }
 }
 
 impl IntoIterator for Hand {
    type Item = PieceSet;
-   type IntoIter = array::IntoIter<PieceSet, PIECE_SET_NUM>;
+   type IntoIter = array::IntoIter<PieceSet, { Hand::PIECE_SET_NUM }>;
 
    fn into_iter(self) -> Self::IntoIter {
       self.sets.into_iter()
@@ -81,7 +83,7 @@ impl IntoIterator for Hand {
 
 impl IntoIterator for &Hand {
    type Item = PieceSet;
-   type IntoIter = array::IntoIter<PieceSet, PIECE_SET_NUM>;
+   type IntoIter = array::IntoIter<PieceSet, { Hand::PIECE_SET_NUM }>;
 
    fn into_iter(self) -> Self::IntoIter {
       self.sets.clone().into_iter()
